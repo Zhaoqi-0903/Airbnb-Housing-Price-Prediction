@@ -1,5 +1,6 @@
 # machine-learning-project
-NYC AirBnb Listings Price Prediction
+# NYC AirBnb Listings Price Prediction
+
 Since founded in 2008, Airbnb has become a novel and popular choice for people staying
 during their visit to a new place. Therefore, the common rental price of an Airbnb listing is of
 interest to both hosts and renters. In this project, we aim to find the best smart price
