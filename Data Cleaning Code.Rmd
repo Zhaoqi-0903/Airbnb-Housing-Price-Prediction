@@ -1,0 +1,80 @@
+---
+title: "Data Cleaning Code"
+author: "Zhaoqi Liu"
+date: "4/17/2020"
+output: word_document
+---
+
+###Dataframe abNYC
+```{r,warning=FALSE,message=FALSE}
+setwd("~/Downloads/STOR 565/STOR 565 Group Project/new-york-city-airbnb-open-data") 
+abnbNYC<-read.csv("AB_NYC_2019_with_cr.csv")
+abNYC<-abnbNYC[,c(1,5:12,14,15,17)] #remove room_name, host_id, host_name, last_review_day
+prop_availability<-abnbNYC$availability_365/365
+abNYC$prop.availability<-prop_availability #make availability_365 a proportion 
+last_review_date<-abnbNYC$last_review
+last_review_date<-as.Date(last_review_date,format="%d/%m/%Y")
+days_last_review<-as.numeric(as.Date("2019-07-09",format="%Y-%m-%d")-last_review_date)
+abNYC$days_last_review<-days_last_review #make last review date as a number 
+abNYC<-na.omit(abNYC) #38803 observations 
+
+#remove listings with 0 available date and last review over 90 days
+library(dplyr)
+prop_availability<-abNYC$prop.availability
+days_last_review<-abNYC$days_last_review
+abNYC<-filter(abNYC,prop_availability!=0 | days_last_review<90)
+#28010 obs, 14 predictors
+```
+
+
+
+###Dataframe abNYCnum---Make Neighborhood_group and room_type as numeric 
+####For PCR model (maybe?)
+```{r}
+abNYCnum<-abNYC
+abNYCnum$neighbourhood_group<-as.numeric(abNYC$neighbourhood_group)
+#"Bronx"=1,"Brooklyn"=2,"Manhattan"=3,"Queens"=4,"Staten Island"=5
+abNYCnum$room_type<-as.numeric(abNYC$room_type)
+#"Entire home/apt=1 "Private room"=2    "Shared room"=3   
+```
+
+
+###Split train and test set 
+```{r}
+#split train and test set 
+set.seed(1234)
+train<-sample(nrow(abNYC),size=floor(nrow(abNYC)/4*3),replace = FALSE)
+train.set<-abNYC[train,] #21007 obs 
+test.set<-abNYC[-train,] #7003 obs
+```
+
+
+
+
+#ggplot for this dataset 
+```{r,warning=FALSE,message=FALSE}
+library(ggmap)
+nyc <- c(left = -74.25, bottom = 40.49, right = -73.71, top =40.92)
+map<-get_stamenmap(nyc, zoom = 10, maptype = "toner-lite") %>% ggmap() 
+#maptype = c("terrain",
+#  "terrain-background", "terrain-labels", "terrain-lines", "toner",
+#  "toner-2010", "toner-2011", "toner-background", "toner-hybrid",
+#  "toner-labels", "toner-lines", "toner-lite", "watercolor")
+```
+
+```{r,warning=FALSE,message=FALSE}
+library(ggplot2)
+library(viridis)
+map+geom_point(aes(x=longitude,y=latitude,col=log(price)),
+               data=abNYC)+
+  scale_color_viridis(option = "D")+scale_size_area(max_size = 10)
+
+map+geom_point(aes(x=longitude,y=latitude,col=log(price)),
+               data=abNYC[abNYC$price<1000,])+
+  scale_color_viridis(option = "D")+scale_size_area(max_size = 1)
+
+
+map+geom_point(aes(x=longitude,y=latitude,col=log(price)),
+               data=abNYC[abNYC$price<200,])+
+  scale_color_viridis(option = "D")+scale_size_area(max_size = 10)
+```
